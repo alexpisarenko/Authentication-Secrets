@@ -1,6 +1,5 @@
 require("dotenv").config();
 const express = require("express");
-const ejs = require("ejs");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const findOrCreate = require("mongoose-findorcreate");
@@ -90,9 +89,15 @@ passport.use(
         {
           externalId: profile.id,
           loginProvider: "Google",
-          displayName: profile.displayName,
+          // displayName: profile.displayName,
         },
         function (err, user) {
+          if (user.displayName !== profile.displayName) {
+            user.displayName = profile.displayName;
+            user.save((err) => {
+              if (err) console.error(err);
+            });
+          }
           return cb(err, user);
         }
       );
@@ -101,7 +106,11 @@ passport.use(
 );
 
 app.get("/", (req, res) => {
-  res.render("home");
+  if (req.isAuthenticated()) {
+    res.redirect("/secrets");
+  } else {
+    res.render("home");
+  }
 });
 
 app.get("/auth/facebook", passport.authenticate("facebook"));
